@@ -1,36 +1,66 @@
 #!/usr/bin/env node
 
-import chalk from 'chalk';
-import inquirer from "inquirer";
+import path from "path";
+import { promises as fs } from "fs";
+
+import chalk from "chalk";
 
 import PostCreator from "./modules/post-creator";
+import DialogueManager from "./core/DialogueManager";
+import InfoManager from "./core/InfoManager";
 
-const modulesMap = new Map([
-	['Create new post', PostCreator],
-]);
-
-interface Answers {
-	helper: string;
-}
-
-const run = async () => {
-	const questions = [
-		{
-			name: 'helper',
-			type: 'list',
-			message: chalk.green('Please choose what you want me to do'),
-			choices: Array.from(modulesMap.keys())
-		}
-	];
-
-	// @ts-ignore
-	let answers: Answers = await inquirer.prompt(questions);
-	const selectedAction = modulesMap.get(answers.helper);
-	if (selectedAction) {
-		selectedAction();
-	} else {
-		console.error('No action found for the selected choice.');
-	}
+type MainConfig = {
+  apiKey: string;
+  baseUrl: string;
 };
 
-void run();
+const App = async () => {
+  const configFile = await fs.readFile(
+    path.join(process.cwd(), "alf.config.json"),
+    "utf-8",
+  );
+  const config: MainConfig = JSON.parse(configFile);
+  const alfred = new Alfred(config);
+
+  void alfred.startDialog();
+};
+
+class Alfred {
+  private dialogManager: DialogueManager;
+  private infoManager: InfoManager;
+
+  features = new Map([
+    ["Ask a question", this.createConversation.bind(this)],
+    ["Create new post", this.createPostDraft.bind(this)],
+  ]);
+
+  constructor(config: MainConfig) {
+    this.infoManager = new InfoManager({
+      baseURL: config.baseUrl,
+      apiKey: config.apiKey
+    });
+    this.dialogManager = new DialogueManager();
+  }
+
+  async createConversation() {
+    const userQuestion = await this.dialogManager.ask(
+      "Please type your question",
+    );
+    const answer = await this.infoManager.ask(userQuestion);
+
+    console.log(chalk.green(answer));
+  }
+
+  createPostDraft() {
+    void PostCreator();
+  }
+
+  async startDialog() {
+    const selectedAction = (await this.dialogManager.chooseFunctionality(
+      this.features,
+    )) as Function;
+    void selectedAction();
+  }
+}
+
+void App();
