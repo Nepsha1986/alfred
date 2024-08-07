@@ -6,12 +6,8 @@ import { promises as fs } from "fs";
 import chalk from "chalk";
 
 import PostCreator from "./modules/post-creator";
-import OpenAI from "openai";
 import DialogueManager from "./core/DialogueManager";
-
-interface Answers {
-  helper: string;
-}
+import InfoManager from "./core/InfoManager";
 
 type MainConfig = {
   apiKey: string;
@@ -30,9 +26,8 @@ const App = async () => {
 };
 
 class Alfred {
-  private ai: OpenAI;
-  private readonly aiModel = "mistralai/Mistral-7B-Instruct-v0.2";
   private dialogManager: DialogueManager;
+  private infoManager: InfoManager;
 
   features = new Map([
     ["Ask a question", this.createConversation.bind(this)],
@@ -40,34 +35,18 @@ class Alfred {
   ]);
 
   constructor(config: MainConfig) {
-    this.ai = new OpenAI({
-      apiKey: config.apiKey,
+    this.infoManager = new InfoManager({
       baseURL: config.baseUrl,
+      apiKey: config.apiKey
     });
     this.dialogManager = new DialogueManager();
   }
 
-  async getAnswer(question: string): Promise<string | null> {
-    try {
-      const response = await this.ai.chat.completions.create({
-        model: this.aiModel,
-        messages: [{ role: "user", content: question }],
-        temperature: 0.7,
-        max_tokens: 20,
-      });
-
-      return response.choices[0].message.content;
-    } catch (e) {
-      console.log(e);
-      return "Error";
-    }
-  }
-
   async createConversation() {
-    const userAnswer = await this.dialogManager.ask(
+    const userQuestion = await this.dialogManager.ask(
       "Please type your question",
     );
-    const answer = await this.getAnswer(userAnswer);
+    const answer = await this.infoManager.ask(userQuestion);
 
     console.log(chalk.green(answer));
   }
