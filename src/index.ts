@@ -4,10 +4,10 @@ import path from "path";
 import { promises as fs } from "fs";
 
 import chalk from "chalk";
-import inquirer from "inquirer";
 
 import PostCreator from "./modules/post-creator";
 import OpenAI from "openai";
+import DialogueManager from "./core/DialogueManager";
 
 interface Answers {
   helper: string;
@@ -26,12 +26,13 @@ const App = async () => {
   const config: MainConfig = JSON.parse(configFile);
   const alfred = new Alfred(config);
 
-  void alfred.init();
+  void alfred.startDialog();
 };
 
 class Alfred {
   private ai: OpenAI;
   private readonly aiModel = "mistralai/Mistral-7B-Instruct-v0.2";
+  private dialogManager: DialogueManager;
 
   features = new Map([
     ["Ask a question", this.createConversation.bind(this)],
@@ -43,6 +44,7 @@ class Alfred {
       apiKey: config.apiKey,
       baseURL: config.baseUrl,
     });
+    this.dialogManager = new DialogueManager();
   }
 
   async getAnswer(question: string): Promise<string | null> {
@@ -62,20 +64,10 @@ class Alfred {
   }
 
   async createConversation() {
-    const questions = [
-      {
-        name: "assistant",
-        type: "input",
-        message: chalk.blue("Please type your question"),
-      },
-    ];
-
-    // @ts-ignore
-    let inputAnswer = await inquirer.prompt(questions);
-
-    console.log(inputAnswer["assistant"]);
-
-    const answer = await this.getAnswer(inputAnswer["assistant"]);
+    const userAnswer = await this.dialogManager.ask(
+      "Please type your question",
+    );
+    const answer = await this.getAnswer(userAnswer);
 
     console.log(chalk.green(answer));
   }
@@ -84,25 +76,11 @@ class Alfred {
     void PostCreator();
   }
 
-  async init() {
-    const questions = [
-      {
-        name: "helper",
-        type: "list",
-        message: chalk.blue("Please choose what you want me to do"),
-        choices: Array.from(this.features.keys()),
-      },
-    ];
-
-    // @ts-ignore
-    let answers: Answers = await inquirer.prompt(questions);
-    const selectedAction = this.features.get(answers.helper);
-    if (selectedAction) {
-      void selectedAction();
-      chalk.green("Done!");
-    } else {
-      chalk.red("No action found for the selected choice.");
-    }
+  async startDialog() {
+    const selectedAction = (await this.dialogManager.chooseFunctionality(
+      this.features,
+    )) as Function;
+    void selectedAction();
   }
 }
 
