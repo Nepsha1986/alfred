@@ -22,6 +22,7 @@
   "bin": {
     "alfred": "./dist/index.js"
   },
+  "files": ["./dist"],
   "homepage": "https://github.com/Nepsha1986/alfred#readme",
   "devDependencies": {
     "@types/chalk": "^2.2.0",

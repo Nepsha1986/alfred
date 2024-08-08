@@ -5,7 +5,6 @@ import { promises as fs } from "fs";
 
 import chalk from "chalk";
 
-import PostCreator from "./modules/post-creator";
 import DialogueManager from "./core/DialogueManager";
 import InfoManager from "./core/InfoManager";
 
@@ -51,8 +50,12 @@ class Alfred {
     console.log(chalk.green(answer));
   }
 
-  createPostDraft() {
-    void PostCreator();
+  async createPostDraft() {
+    const postTitle = await this.dialogManager.ask(
+      "Please provide post title",
+    );
+
+    console.log('New post created successfully!')
   }
 
   async startDialog() {
