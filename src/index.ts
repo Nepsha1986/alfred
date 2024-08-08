@@ -55,7 +55,7 @@ class Alfred {
       "Please provide post title",
     );
 
-    console.log('New post created successfully!')
+    console.log('New post created successfully! NPM registry test!')
   }
 
   async startDialog() {

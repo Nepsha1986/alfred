@@ -1,6 +1,6 @@
 {
-  "name": "alfred",
-  "version": "0.0.1",
+  "name": "handbook-assistant",
+  "version": "0.0.2",
   "description": "CLI utility for content creation",
   "type": "commonjs",
   "main": "./dist/index.js",
@@ -20,9 +20,11 @@
     "url": "https://github.com/Nepsha1986/alfred/issues"
   },
   "bin": {
-    "alfred": "./dist/index.js"
+    "alfred": "dist/index.js"
   },
-  "files": ["./dist"],
+  "files": [
+    "./dist"
+  ],
   "homepage": "https://github.com/Nepsha1986/alfred#readme",
   "devDependencies": {
     "@types/chalk": "^2.2.0",
