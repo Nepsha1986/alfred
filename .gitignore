@@ -8,3 +8,7 @@ dist
 
 # Configuration file
 alf.config.json
+
+# Tests folders
+content
+example
