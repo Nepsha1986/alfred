@@ -57,7 +57,7 @@ class Alfred {
     const speciesName = await this.dialogManager.ask(
       "Please provide a unique species name",
     );
-    const folderName = speciesName.toLowerCase().replace(" ", "-");
+    const folderName = speciesName.toLowerCase().replace(/\s/g, "-");
 
     const generatedJson = await this.infoManager.generateAnswerFromExampleFile(
       `I need to create a json data for ${speciesName}`,
