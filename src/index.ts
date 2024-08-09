@@ -7,6 +7,7 @@ import chalk from "chalk";
 
 import DialogueManager from "./core/DialogueManager";
 import InfoManager from "./core/InfoManager";
+import FileManager from "./core/FileManager";
 
 type MainConfig = {
   apiKey: string;
@@ -27,6 +28,7 @@ const App = async () => {
 class Alfred {
   private dialogManager: DialogueManager;
   private infoManager: InfoManager;
+  private fileManager: FileManager;
 
   features = new Map([
     ["Ask a question", this.createConversation.bind(this)],
@@ -36,9 +38,10 @@ class Alfred {
   constructor(config: MainConfig) {
     this.infoManager = new InfoManager({
       baseURL: config.baseUrl,
-      apiKey: config.apiKey
+      apiKey: config.apiKey,
     });
     this.dialogManager = new DialogueManager();
+    this.fileManager = new FileManager();
   }
 
   async createConversation() {
@@ -51,11 +54,21 @@ class Alfred {
   }
 
   async createPostDraft() {
-    const postTitle = await this.dialogManager.ask(
-      "Please provide post title",
+    const speciesName = await this.dialogManager.ask(
+      "Please provide a unique species name",
+    );
+    const folderName = speciesName.toLowerCase().replace(" ", "-");
+
+    const generatedJson = await this.infoManager.generateAnswerFromFile(
+      speciesName,
+      this.fileManager.jsonInfoExampleRoute,
     );
 
-    console.log('New post created successfully! NPM registry test!')
+    await this.fileManager.createSpeciesInfo(folderName, generatedJson || "{}");
+
+    console.log(
+      chalk.green(`New post created successfully! Please check ${folderName}`),
+    );
   }
 
   async startDialog() {
