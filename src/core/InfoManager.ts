@@ -24,7 +24,7 @@ class InfoManager {
     }
   }
 
-  async generateAnswerFromFile(speciesName: string, fileName: string) {
+  async generateAnswerFromExampleFile(text: string, fileName: string) {
     const fileData = await fs.readFile(fileName, "utf-8");
 
     try {
@@ -33,7 +33,7 @@ class InfoManager {
         messages: [
           {
             role: "user",
-            content: `I need to create a json data for ${speciesName}, here is an example ${fileData}`,
+            content: `${text}. Here is an example ${fileData}`,
           },
         ],
         temperature: 0.7,
