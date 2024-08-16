@@ -8,7 +8,7 @@
     "dev": "npx nodemon",
     "build": "tsc",
     "start": "node ./dist/index.js",
-    "format": "prettier ./src --write"
+    "format": "prettier ./src 'README.md' --write"
   },
   "repository": {
     "type": "git",

@@ -29,7 +29,7 @@ class DialogueManager {
 
     // @ts-ignore
     const answers: Answers = await inquirer.prompt(questions);
-    return features.get(answers.helper) || null;
+    return features.get(answers["helper"]) || null;
   }
 }
 
