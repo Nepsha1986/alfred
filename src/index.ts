@@ -53,37 +53,93 @@ class Alfred {
     console.log(chalk.green(answer));
   }
 
+  async generatePostWithAI(speciesName: string) {
+    const folderName = speciesName.toLowerCase().replace(/\s/g, "-");
+
+    console.log(
+      chalk.yellow(
+        `Trying to generate a post for ${speciesName} with a help of AI. Please wait...`,
+      ),
+    );
+
+    const [generatedJsonResult, generatedContentResult] =
+      await Promise.allSettled([
+        this.infoManager.generateAnswerFromExampleFile(
+          `I need to create a json data for ${speciesName}`,
+          this.fileManager.jsonInfoExampleRoute,
+        ),
+        this.infoManager.generateAnswerFromExampleFile(
+          `I need to create a content in .mdx format (markdown) for ${speciesName}`,
+          this.fileManager.mainContentExampleRoute,
+        ),
+      ]);
+
+    const generatedJson =
+      generatedJsonResult.status === "fulfilled"
+        ? generatedJsonResult.value
+        : "{}";
+    const generatedContent =
+      generatedContentResult.status === "fulfilled"
+        ? generatedContentResult.value
+        : "";
+
+    const results = await Promise.allSettled([
+      this.fileManager.createContentFile(
+        folderName,
+        "_info.json",
+        generatedJson || "",
+      ),
+      this.fileManager.createContentFile(
+        folderName,
+        "en.mdx",
+        generatedContent || "",
+      ),
+    ]);
+
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        console.error(`Failed to create file #${index + 1}:`, result.reason);
+      }
+    });
+
+    console.log(
+      chalk.green(
+        `New post created successfully! Please check ${folderName} folder`,
+      ),
+    );
+  }
+
+  async copyTemplate(speciesName: string) {
+    const folderName = speciesName.toLowerCase().replace(/\s/g, "-");
+
+    try {
+      void this.fileManager.copyDraft(folderName);
+      console.log(
+        chalk.green(
+          `New draft for ${speciesName} created successfully! Please check ${folderName}`,
+        ),
+      );
+    } catch (e) {
+      console.log(
+        chalk.red(`Error while creating a  Please check ${folderName}`),
+      );
+      throw new Error("can not copy");
+    }
+  }
+
   async createPostDraft() {
     const speciesName = await this.dialogManager.ask(
       "Please provide a unique species name",
     );
-    const folderName = speciesName.toLowerCase().replace(" ", "-");
 
-    const generatedJson = await this.infoManager.generateAnswerFromExampleFile(
-      `I need to create a json data for ${speciesName}`,
-      this.fileManager.jsonInfoExampleRoute,
+    const selectedAction = await this.dialogManager.chooseFunctionality(
+      new Map([
+        ["Generate with AI", () => this.generatePostWithAI(speciesName)],
+        ["Copy from template", () => this.copyTemplate(speciesName)],
+      ]),
     );
 
-    const generatedContent =
-      await this.infoManager.generateAnswerFromExampleFile(
-        `I need to create a content in .mdx format (markdown) for ${speciesName}`,
-        this.fileManager.mainContentExampleRoute,
-      );
-
-    await this.fileManager.createContentFile(
-      folderName,
-      "_info.json",
-      generatedJson || "{}",
-    );
-    await this.fileManager.createContentFile(
-      folderName,
-      "en.mdx",
-      generatedContent || "",
-    );
-
-    console.log(
-      chalk.green(`New post created successfully! Please check ${folderName}`),
-    );
+    selectedAction && selectedAction();
   }
 
   async startDialog() {

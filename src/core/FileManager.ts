@@ -3,15 +3,28 @@ import { promises as fs } from "fs";
 
 class FileManager {
   #contentDir = path.resolve("content");
-  #jsonInfoExampleRoute = path.resolve("example", "_info.json");
-  #mainContentExampleRoute = path.resolve("example", "$lang.mdx");
+  #assistantFilesDir = path.resolve("__assistant__");
+
+  #templateFilesPath = path.resolve(this.#assistantFilesDir, "template");
+  #jsonInfoExampleRoute = path.resolve(
+    this.#assistantFilesDir,
+    "example",
+    "_info.json",
+  );
+  #mainContentExampleRoute = path.resolve(
+    this.#assistantFilesDir,
+    "example",
+    "$lang.mdx",
+  );
 
   async copyDraft(folderName: string) {
-    const templateDir = path.resolve("example");
     const destFolder = path.join(this.#contentDir, folderName);
 
     try {
-      await fs.cp(templateDir, destFolder, { recursive: true, force: true });
+      await fs.cp(this.#templateFilesPath, destFolder, {
+        recursive: true,
+        force: true,
+      });
     } catch (error) {
       console.error("Failed to copy directory:", error);
     }
