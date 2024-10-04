@@ -9,27 +9,43 @@ class FileManager {
   #jsonInfoExampleRoute = path.resolve(
     this.#assistantFilesDir,
     "example",
-    "_info.json",
+    "_info.json"
   );
   #mainContentExampleRoute = path.resolve(
     this.#assistantFilesDir,
     "example",
-    "$lang.mdx",
+    "$lang.mdx"
   );
+
+  async #folderExists(folderPath: string) {
+    try {
+      const stats = await fs.stat(folderPath);
+      return stats.isDirectory();
+    } catch (error: any) {
+      if (error.code === 'ENOENT') return false;
+      throw error;
+    }
+  }
 
   async copyDraft(folderName: string) {
     const destFolder = path.join(this.#contentDir, folderName);
 
     try {
+      const folderExists = await this.#folderExists(destFolder);
+      if (folderExists) {
+        throw new Error('The folder already exists');
+      }
       await fs.cp(this.#templateFilesPath, destFolder, {
         recursive: true,
         force: true,
       });
-    } catch (error) {
-      console.error("Failed to copy directory:", error);
+      console.log(`Template copied to ${destFolder}`);
+    } catch (error: any) {
+      console.error("Failed to copy template:", error.message);
     }
   }
 
+  // Create a content file in the specified folder
   async createContentFile(folder: string, fileName: string, infoData: string) {
     const dirPath = path.join(this.#contentDir, folder);
     const filePath = path.join(dirPath, fileName);
@@ -38,8 +54,8 @@ class FileManager {
       await fs.mkdir(dirPath, { recursive: true });
       await fs.writeFile(filePath, infoData, "utf-8");
       console.log(`${fileName} created at ${filePath}`);
-    } catch (error) {
-      console.error(`Failed to create ${fileName}:`, error);
+    } catch (error: any) {
+      console.error(`Failed to create ${fileName}:`, error.message);
     }
   }
 
